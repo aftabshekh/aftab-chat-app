@@ -1,6 +1,11 @@
 import express, { Application } from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+
+dotenv.config();
+
+// fix mongoose warning
+mongoose.set("strictQuery", false);
 import cors from "cors";
 import { Server } from "socket.io";
 import http, { Server as httpServer } from "http";
