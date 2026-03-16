@@ -110,19 +110,24 @@ class Connection {
       console.log(`🚀 Server running on port ${PORT}`);
     });
   }
+public async connectToDB() {
+  try {
+    const DB_URI = process.env.DB_URI;
 
-  public async connectToDB() {
-    try {
-      await mongoose.connect(process.env.DB_URI as string);
-
-      console.log("✅ MongoDB Connected");
-
-      this.listen();
-    } catch (error) {
-      console.error("❌ MongoDB connection error:", error);
-      process.exit(1);
+    if (!DB_URI) {
+      throw new Error("DB_URI is missing in environment variables");
     }
+
+    await mongoose.connect(DB_URI);
+
+    console.log("✅ MongoDB Connected");
+
+    this.listen();
+  } catch (error) {
+    console.error("❌ MongoDB connection error:", error);
+    process.exit(1);
   }
+}
 }
 
 const server = new Connection();
