@@ -21,26 +21,32 @@ const http_1 = __importDefault(require("http"));
 const userRoute_1 = __importDefault(require("./routes/userRoute"));
 const userFriendRoute_1 = __importDefault(require("./routes/userFriendRoute"));
 const messageRoute_1 = __importDefault(require("./routes/messageRoute"));
+dotenv_1.default.config();
 class Connection {
     constructor() {
         this.app = (0, express_1.default)();
         this.http = http_1.default.createServer(this.app);
         this.io = new socket_io_1.Server(this.http, {
             cors: {
-                origin: "*"
+                origin: "*", // later replace with your Vercel domain
+                methods: ["GET", "POST"]
             }
         });
-        dotenv_1.default.config();
         this.activeUsers = [];
     }
     test() {
         this.app.get("/", (req, res) => {
-            res.status(200).json("Testing server!");
+            res.status(200).json({
+                message: "Aftab Chat API Running 🚀"
+            });
         });
     }
     useMiddleWares() {
         this.app.use(express_1.default.json({ limit: "50mb" }));
-        this.app.use((0, cors_1.default)());
+        this.app.use((0, cors_1.default)({
+            origin: "*",
+            credentials: true
+        }));
     }
     initializeRoutes() {
         this.app.use("/api/user", userRoute_1.default);
@@ -49,8 +55,10 @@ class Connection {
     }
     initSocketConnection() {
         this.io.on("connection", (socket) => {
+            console.log("User connected:", socket.id);
             socket.on("add-new-user", (userId) => {
-                if (!this.activeUsers.find(user => user.userId === userId) && userId) {
+                if (!this.activeUsers.find((user) => user.userId === userId) &&
+                    userId) {
                     this.activeUsers.push({
                         userId,
                         socketId: socket.id
@@ -58,28 +66,37 @@ class Connection {
                     this.io.emit("get-online-users", this.activeUsers);
                 }
             });
-            socket.on("send-message", data => {
+            socket.on("send-message", (data) => {
                 const { receiverId } = data;
-                const user = this.activeUsers.find(user => user.userId === receiverId);
+                const user = this.activeUsers.find((user) => user.userId === receiverId);
                 if (user) {
                     this.io.to(user.socketId).emit("receive-message", data);
                 }
             });
             socket.on("disconnect", () => {
-                this.activeUsers = this.activeUsers.filter(user => user.socketId !== socket.id);
+                console.log("User disconnected:", socket.id);
+                this.activeUsers = this.activeUsers.filter((user) => user.socketId !== socket.id);
                 this.io.emit("get-online-users", this.activeUsers);
             });
         });
     }
     listen() {
-        this.http.listen(process.env.PORT, () => {
-            console.log("Connected to db & server started on port", process.env.PORT);
+        const PORT = process.env.PORT || 5000;
+        this.http.listen(PORT, () => {
+            console.log(`🚀 Server running on port ${PORT}`);
         });
     }
     connectToDB() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield mongoose_1.default.connect(process.env.DB_URI);
-            this.listen();
+            try {
+                yield mongoose_1.default.connect(process.env.DB_URI);
+                console.log("✅ MongoDB Connected");
+                this.listen();
+            }
+            catch (error) {
+                console.error("❌ MongoDB connection error:", error);
+                process.exit(1);
+            }
         });
     }
 }

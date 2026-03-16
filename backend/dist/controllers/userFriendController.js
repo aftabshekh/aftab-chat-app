@@ -12,7 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFriends = exports.addFriend = void 0;
+exports.addFriend = addFriend;
+exports.getFriends = getFriends;
 const userFriendModel_1 = __importDefault(require("../models/userFriendModel"));
 function addFriend(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -48,7 +49,6 @@ function addFriend(req, res) {
         }
     });
 }
-exports.addFriend = addFriend;
 function getFriends(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const uId = req.user._id;
@@ -65,4 +65,3 @@ function getFriends(req, res) {
         }
     });
 }
-exports.getFriends = getFriends;

@@ -12,7 +12,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getLastMessage = exports.getMessages = exports.addMessage = void 0;
+exports.addMessage = addMessage;
+exports.getMessages = getMessages;
+exports.getLastMessage = getLastMessage;
 const messageModel_1 = __importDefault(require("../models/messageModel"));
 function addMessage(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -26,7 +28,6 @@ function addMessage(req, res) {
         }
     });
 }
-exports.addMessage = addMessage;
 function getMessages(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const { senderId, receiverId } = req.params;
@@ -52,7 +53,6 @@ function getMessages(req, res) {
         }
     });
 }
-exports.getMessages = getMessages;
 function getLastMessage(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const { senderId, receiverId } = req.params;
@@ -78,4 +78,3 @@ function getLastMessage(req, res) {
         }
     });
 }
-exports.getLastMessage = getLastMessage;
