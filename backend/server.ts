@@ -1,6 +1,7 @@
 import express, { Application } from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import authRoute from "./routes/auth";
 
 dotenv.config();
 
@@ -62,9 +63,11 @@ class Connection {
   }
 
   public initializeRoutes() {
+     this.app.use("/api/auth", authRoute);
     this.app.use("/api/user", userRoute);
     this.app.use("/api/friend", userFriendRoute);
     this.app.use("/api/message", messageRoute);
+   
   }
 
   public initSocketConnection() {
