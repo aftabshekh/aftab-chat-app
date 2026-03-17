@@ -1,8 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link } from "react-router-dom"
+import { Link } from "react-router-dom";
 import login from "../../assets/loginchat.png";
 import NavBar from '../../components/NavBar';
-import { AiOutlineUser, RiLockPasswordFill } from "react-icons/all";
+import { AiOutlineUser } from "react-icons/ai";
+import { RiLockPasswordFill } from "react-icons/ri";
 import AuthContext from '../../contexts/AuthContext';
 import { Type } from '../../types';
 
@@ -21,21 +22,20 @@ function Login() {
         if (text.includes(".") && text.includes("@")) {
             setUserName("");
         } else {
-            setEmail("")
+            setEmail("");
         }
-    }, [text])
+    }, [text]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        
         const res = await fetch(`https://hawky.onrender.com/api/user/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ email, password, userName})
+            body: JSON.stringify({ email, password, userName })
         });
 
         const json = await res.json();
@@ -43,17 +43,15 @@ function Login() {
         if (!res.ok) {
             setErr(json.error);
             setLoading(false);
-            setTimeout(() => {
-                setErr("");
-            }, 3000);
+            setTimeout(() => setErr(""), 3000);
         }
 
         if (res.ok) {
             setLoading(false);
-            dispatch({type: Type.LOGIN, payload: json});
+            dispatch({ type: Type.LOGIN, payload: json });
             localStorage.setItem("user", JSON.stringify(json));
         }
-    }
+    };
 
     return (
         <>
@@ -61,46 +59,75 @@ function Login() {
 
             <div className='flex flex-wrap justify-around items-center mt-20 mb-8'>
                 <div>
-                    <img className='w-[340px]' src={login} alt="register" />
-                    <p className='sm:text-2xl text-lg text-center'>Welcome back. Login your account to continue having fun.</p>
+                    <img className='w-[340px]' src={login} alt="login" />
+                    <p className='sm:text-2xl text-lg text-center'>
+                        Welcome back. Login your account to continue having fun.
+                    </p>
                 </div>
 
                 <div className='bg-navbg text-center sm:mt-0 mt-8 sm:w-96 h-[400px] flex flex-col rounded-lg p-6'>
                     <h2 className='text-2xl font-heading'>Login</h2>
 
                     <form onSubmit={handleSubmit} className='mt-6'>
+
                         <div className='flex items-center my-4 bg-gray-900 py-1 rounded-md'>
-                            <p className='h-[40px] text-center flex items-center justify-center p-2'><AiOutlineUser size={20} /></p>
-                            <input value={text} onChange={e => {
-                                setText(e.target.value);
-                                setEmail(e.target.value);
-                                setUserName(e.target.value);
-                            }} className='w-11/12 py-2 px-1 bg-gray-900' type="text" placeholder='Username or Email' />
+                            <p className='h-[40px] flex items-center justify-center p-2'>
+                                <AiOutlineUser size={20} />
+                            </p>
+
+                            <input
+                                value={text}
+                                onChange={e => {
+                                    setText(e.target.value);
+                                    setEmail(e.target.value);
+                                    setUserName(e.target.value);
+                                }}
+                                className='w-11/12 py-2 px-1 bg-gray-900 outline-none'
+                                type="text"
+                                placeholder='Username or Email'
+                            />
                         </div>
 
                         <div className='flex items-center my-4 bg-gray-900 py-1 rounded-md'>
-                            <p className='h-[40px] text-center flex items-center justify-center p-2'><RiLockPasswordFill size={20} /></p>
-                            <input value={password} onChange={e => setPassword(e.target.value)} className='w-11/12 py-2 px-1 bg-gray-900' type="password" placeholder='Password' />
+                            <p className='h-[40px] flex items-center justify-center p-2'>
+                                <RiLockPasswordFill size={20} />
+                            </p>
+
+                            <input
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                className='w-11/12 py-2 px-1 bg-gray-900 outline-none'
+                                type="password"
+                                placeholder='Password'
+                            />
                         </div>
 
-                        {
-                            err && (
-                                <div className='text-red-300'>
-                                    { err }
-                                </div>
-                            )
-                        }
+                        {err && (
+                            <div className='text-red-300'>
+                                {err}
+                            </div>
+                        )}
 
                         <div className='w-full flex items-center justify-center'>
-                            <button disabled={loading} className={`${loading ? "cursor-default" : "active:scale-75"} bg-login text-gray-600 px-4 py-2 rounded-lg font-bold flex items-center justify-center drop-shadow-2xl duration-300`}>
-                                {
-                                    loading ? <div className='animate-spin w-5 h-5 border-[2px] border-gray-600 rounded-full border-t-black mr-1'></div> : ""
-                                } Login
+                            <button
+                                disabled={loading}
+                                className={`${loading ? "cursor-default" : "active:scale-75"} bg-login text-gray-600 px-4 py-2 rounded-lg font-bold flex items-center justify-center duration-300`}
+                            >
+                                {loading && (
+                                    <div className='animate-spin w-5 h-5 border-[2px] border-gray-600 rounded-full border-t-black mr-1'></div>
+                                )}
+                                Login
                             </button>
-                       </div>
+                        </div>
+
                     </form>
 
-                    <h3 className='mt-7'>Don't have an account? <Link className='text-register' to="/register">Register</Link></h3>
+                    <h3 className='mt-7'>
+                        Don't have an account?{" "}
+                        <Link className='text-register' to="/register">
+                            Register
+                        </Link>
+                    </h3>
                 </div>
             </div>
         </>
