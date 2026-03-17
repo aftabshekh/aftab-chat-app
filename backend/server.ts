@@ -31,12 +31,13 @@ class Connection {
     this.app = express();
     this.http = http.createServer(this.app);
 
-    this.io = new Server(this.http, {
-      cors: {
-        origin: "*", // later replace with your Vercel domain
-        methods: ["GET", "POST"]
-      }
-    });
+   this.io = new Server(this.http, {
+  cors: {
+    origin: "https://aftab-chat-app.vercel.app",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
 
     this.activeUsers = [];
   }
@@ -53,11 +54,11 @@ class Connection {
     this.app.use(express.json({ limit: "50mb" }));
 
     this.app.use(
-      cors({
-        origin: "*",
-        credentials: true
-      })
-    );
+  cors({
+    origin: "https://aftab-chat-app.vercel.app",
+    credentials: true
+  })
+);
   }
 
   public initializeRoutes() {
