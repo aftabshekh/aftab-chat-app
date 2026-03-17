@@ -1,7 +1,10 @@
 import axios from "axios";
 
-const API = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL
+const BASE_URL = "https://aftab-chat-app.onrender.com";
+
+const api = axios.create({
+  baseURL: BASE_URL,
+  withCredentials: true,
 });
 
-export default API;
+export default api;

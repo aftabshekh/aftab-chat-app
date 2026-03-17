@@ -6,19 +6,19 @@ import { AiOutlineUser } from "react-icons/ai";
 import { RiLockPasswordFill } from "react-icons/ri";
 import AuthContext from "../../contexts/AuthContext";
 import { Type } from "../../types";
-import API from "../../api/axios"; // ✅ axios import
+import API from "../../api/axios";
 
 function Login() {
   const [text, setText] = useState("");
   const [password, setPassword] = useState("");
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
   const { dispatch } = useContext(AuthContext);
 
-  // ✅ Detect email or username
+  // Detect email or username
   useEffect(() => {
     if (text.includes("@")) {
       setUserName("");
@@ -29,7 +29,7 @@ function Login() {
     }
   }, [text]);
 
-  // ✅ LOGIN FUNCTION
+  // LOGIN FUNCTION
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -41,15 +41,19 @@ function Login() {
 
       const res = await API.post("/api/auth/login", loginData);
 
+      console.log("Login Response:", res.data); // 🔥 DEBUG
+
       setLoading(false);
 
-      // ✅ save user
+      // save user
       dispatch({ type: Type.LOGIN, payload: res.data });
       localStorage.setItem("user", JSON.stringify(res.data));
+
     } catch (error: any) {
       setLoading(false);
-      setErr(error?.response?.data?.error || "Login failed");
+      console.log("Login Error:", error); // 🔥 DEBUG
 
+      setErr(error?.response?.data?.error || "Login failed");
       setTimeout(() => setErr(""), 3000);
     }
   };
@@ -70,6 +74,7 @@ function Login() {
           <h2 className="text-2xl font-heading">Login</h2>
 
           <form onSubmit={handleSubmit} className="mt-6">
+            
             {/* Username / Email */}
             <div className="flex items-center my-4 bg-gray-900 py-1 rounded-md">
               <p className="h-[40px] flex items-center justify-center p-2">
@@ -108,8 +113,7 @@ function Login() {
             {/* Button */}
             <div className="w-full flex items-center justify-center mt-4">
               <button
-                type="button"
-                onClick={handleSubmit}
+                type="submit"   // ✅ FIXED
                 disabled={loading}
                 className={`${loading ? "cursor-not-allowed" : "active:scale-75"} bg-login text-gray-600 px-4 py-2 rounded-lg font-bold flex items-center justify-center duration-300`}
               >
