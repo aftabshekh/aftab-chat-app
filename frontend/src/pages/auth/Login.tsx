@@ -6,6 +6,7 @@ import { AiOutlineUser } from "react-icons/ai";
 import { RiLockPasswordFill } from "react-icons/ri";
 import AuthContext from '../../contexts/AuthContext';
 import { Type } from '../../types';
+import API from "../../api/axios"; // ✅ axios import
 
 function Login() {
 
@@ -18,38 +19,40 @@ function Login() {
 
     const { dispatch } = useContext(AuthContext);
 
+    // ✅ Detect email or username
     useEffect(() => {
-        if (text.includes(".") && text.includes("@")) {
+        if (text.includes("@")) {
             setUserName("");
+            setEmail(text);
         } else {
             setEmail("");
+            setUserName(text);
         }
     }, [text]);
 
+    // ✅ LOGIN FUNCTION
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        const res = await fetch(`https://hawky.onrender.com/api/user/login`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ email, password, userName })
-        });
+        try {
+            const loginData = text.includes("@")
+                ? { email, password }
+                : { userName, password };
 
-        const json = await res.json();
+            const res = await API.post("/api/auth/login", loginData);
 
-        if (!res.ok) {
-            setErr(json.error);
             setLoading(false);
+
+            // ✅ save user
+            dispatch({ type: Type.LOGIN, payload: res.data });
+            localStorage.setItem("user", JSON.stringify(res.data));
+
+        } catch (error: any) {
+            setLoading(false);
+            setErr(error?.response?.data?.error || "Login failed");
+
             setTimeout(() => setErr(""), 3000);
-        }
-
-        if (res.ok) {
-            setLoading(false);
-            dispatch({ type: Type.LOGIN, payload: json });
-            localStorage.setItem("user", JSON.stringify(json));
         }
     };
 
@@ -70,6 +73,7 @@ function Login() {
 
                     <form onSubmit={handleSubmit} className='mt-6'>
 
+                        {/* Username / Email */}
                         <div className='flex items-center my-4 bg-gray-900 py-1 rounded-md'>
                             <p className='h-[40px] flex items-center justify-center p-2'>
                                 <AiOutlineUser size={20} />
@@ -77,17 +81,15 @@ function Login() {
 
                             <input
                                 value={text}
-                                onChange={e => {
-                                    setText(e.target.value);
-                                    setEmail(e.target.value);
-                                    setUserName(e.target.value);
-                                }}
+                                onChange={e => setText(e.target.value)}
                                 className='w-11/12 py-2 px-1 bg-gray-900 outline-none'
                                 type="text"
                                 placeholder='Username or Email'
+                                required
                             />
                         </div>
 
+                        {/* Password */}
                         <div className='flex items-center my-4 bg-gray-900 py-1 rounded-md'>
                             <p className='h-[40px] flex items-center justify-center p-2'>
                                 <RiLockPasswordFill size={20} />
@@ -99,19 +101,22 @@ function Login() {
                                 className='w-11/12 py-2 px-1 bg-gray-900 outline-none'
                                 type="password"
                                 placeholder='Password'
+                                required
                             />
                         </div>
 
+                        {/* Error */}
                         {err && (
-                            <div className='text-red-300'>
+                            <div className='text-red-300 text-sm'>
                                 {err}
                             </div>
                         )}
 
-                        <div className='w-full flex items-center justify-center'>
+                        {/* Button */}
+                        <div className='w-full flex items-center justify-center mt-4'>
                             <button
                                 disabled={loading}
-                                className={`${loading ? "cursor-default" : "active:scale-75"} bg-login text-gray-600 px-4 py-2 rounded-lg font-bold flex items-center justify-center duration-300`}
+                                className={`${loading ? "cursor-not-allowed" : "active:scale-75"} bg-login text-gray-600 px-4 py-2 rounded-lg font-bold flex items-center justify-center duration-300`}
                             >
                                 {loading && (
                                     <div className='animate-spin w-5 h-5 border-[2px] border-gray-600 rounded-full border-t-black mr-1'></div>
