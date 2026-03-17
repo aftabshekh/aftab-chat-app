@@ -33,10 +33,16 @@ class Connection {
     // ✅ HTTP server
     this.server = http.createServer(this.app);
 
-    // ✅ Socket.IO setup
+    // ✅ Allowed origins (IMPORTANT)
+    const allowedOrigins = [
+      "https://aftab-chat-app.vercel.app",
+      "https://aftab-chat-app-git-main-aftabshekh8177-4609s-projects.vercel.app"
+    ];
+
+    // ✅ Socket.IO setup (FIXED)
     this.io = new Server(this.server, {
       cors: {
-        origin: "https://aftab-chat-app.vercel.app",
+        origin: allowedOrigins,
         methods: ["GET", "POST"],
         credentials: true
       }
@@ -56,9 +62,21 @@ class Connection {
   public useMiddleWares() {
     this.app.use(express.json({ limit: "50mb" }));
 
+    const allowedOrigins = [
+      "https://aftab-chat-app.vercel.app",
+      "https://aftab-chat-app-git-main-aftabshekh8177-4609s-projects.vercel.app"
+    ];
+
+    // ✅ CORS FIXED (dynamic origin)
     this.app.use(
       cors({
-        origin: "https://aftab-chat-app.vercel.app",
+        origin: function (origin, callback) {
+          if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+          } else {
+            callback(new Error("CORS not allowed"));
+          }
+        },
         credentials: true
       })
     );
