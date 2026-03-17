@@ -1,44 +1,46 @@
 import express, { Application } from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import authRoute from "./routes/auth";
-
-dotenv.config();
-
-// fix mongoose warning
-mongoose.set("strictQuery", false);
 import cors from "cors";
 import { Server } from "socket.io";
-import http, { Server as httpServer } from "http";
+import http, { Server as HttpServer } from "http";
 
+// routes
+import authRoute from "./routes/auth";
 import userRoute from "./routes/userRoute";
 import userFriendRoute from "./routes/userFriendRoute";
 import messageRoute from "./routes/messageRoute";
 
 dotenv.config();
 
-interface activeUsersProps {
+// fix mongoose warning
+mongoose.set("strictQuery", false);
+
+interface ActiveUsersProps {
   socketId: string;
   userId: string;
 }
 
 class Connection {
   private app: Application;
+  private server: HttpServer;
   private io: Server;
-  private http: httpServer;
-  private activeUsers: activeUsersProps[];
+  private activeUsers: ActiveUsersProps[];
 
   public constructor() {
     this.app = express();
-    this.http = http.createServer(this.app);
 
-   this.io = new Server(this.http, {
-  cors: {
-    origin: "https://aftab-chat-app.vercel.app",
-    methods: ["GET", "POST"],
-    credentials: true
-  }
-});
+    // ✅ HTTP server
+    this.server = http.createServer(this.app);
+
+    // ✅ Socket.IO setup
+    this.io = new Server(this.server, {
+      cors: {
+        origin: "https://aftab-chat-app.vercel.app",
+        methods: ["GET", "POST"],
+        credentials: true
+      }
+    });
 
     this.activeUsers = [];
   }
@@ -55,25 +57,25 @@ class Connection {
     this.app.use(express.json({ limit: "50mb" }));
 
     this.app.use(
-  cors({
-    origin: "https://aftab-chat-app.vercel.app",
-    credentials: true
-  })
-);
+      cors({
+        origin: "https://aftab-chat-app.vercel.app",
+        credentials: true
+      })
+    );
   }
 
   public initializeRoutes() {
-     this.app.use("/api/auth", authRoute);
+    this.app.use("/api/auth", authRoute);
     this.app.use("/api/user", userRoute);
     this.app.use("/api/friend", userFriendRoute);
     this.app.use("/api/message", messageRoute);
-   
   }
 
   public initSocketConnection() {
     this.io.on("connection", (socket) => {
-      console.log("User connected:", socket.id);
+      console.log("🔥 User connected:", socket.id);
 
+      // ✅ Add user
       socket.on("add-new-user", (userId) => {
         if (
           !this.activeUsers.find((user) => user.userId === userId) &&
@@ -88,6 +90,7 @@ class Connection {
         }
       });
 
+      // ✅ Send message
       socket.on("send-message", (data) => {
         const { receiverId } = data;
 
@@ -100,8 +103,9 @@ class Connection {
         }
       });
 
+      // ✅ Disconnect
       socket.on("disconnect", () => {
-        console.log("User disconnected:", socket.id);
+        console.log("❌ User disconnected:", socket.id);
 
         this.activeUsers = this.activeUsers.filter(
           (user) => user.socketId !== socket.id
@@ -115,30 +119,31 @@ class Connection {
   private listen() {
     const PORT = process.env.PORT || 5000;
 
-    this.http.listen(PORT, () => {
+    this.server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
   }
-public async connectToDB() {
-  try {
-    const DB_URI = process.env.DB_URI;
 
-    if (!DB_URI) {
-      throw new Error("DB_URI is missing in environment variables");
+  public async connectToDB() {
+    try {
+      const DB_URI = process.env.DB_URI;
+
+      if (!DB_URI) {
+        throw new Error("DB_URI is missing");
+      }
+
+      await mongoose.connect(DB_URI);
+      console.log("✅ MongoDB Connected");
+
+      this.listen();
+    } catch (error) {
+      console.error("❌ MongoDB error:", error);
+      process.exit(1);
     }
-
-    await mongoose.connect(DB_URI);
-
-    console.log("✅ MongoDB Connected");
-
-    this.listen();
-  } catch (error) {
-    console.error("❌ MongoDB connection error:", error);
-    process.exit(1);
   }
 }
-}
 
+// ✅ INIT ORDER (IMPORTANT)
 const server = new Connection();
 
 server.useMiddleWares();
