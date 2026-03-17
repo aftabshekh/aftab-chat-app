@@ -114,15 +114,16 @@ function Login() {
 
                         {/* Button */}
                         <div className='w-full flex items-center justify-center mt-4'>
-                            <button
-                                disabled={loading}
-                                className={`${loading ? "cursor-not-allowed" : "active:scale-75"} bg-login text-gray-600 px-4 py-2 rounded-lg font-bold flex items-center justify-center duration-300`}
-                            >
-                                {loading && (
-                                    <div className='animate-spin w-5 h-5 border-[2px] border-gray-600 rounded-full border-t-black mr-1'></div>
-                                )}
-                                Login
-                            </button>
+                          <button
+    type="submit"
+    disabled={loading}
+    className={`${loading ? "cursor-not-allowed" : "active:scale-75"} bg-login text-gray-600 px-4 py-2 rounded-lg font-bold flex items-center justify-center duration-300`}
+>
+    {loading && (
+        <div className='animate-spin w-5 h-5 border-[2px] border-gray-600 rounded-full border-t-black mr-1'></div>
+    )}
+    Login
+</button>
                         </div>
 
                     </form>
