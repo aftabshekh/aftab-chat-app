@@ -16,34 +16,34 @@ exports.addMessage = addMessage;
 exports.getMessages = getMessages;
 exports.getLastMessage = getLastMessage;
 const messageModel_1 = __importDefault(require("../models/messageModel"));
+// ✅ SEND MESSAGE
 function addMessage(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const { text, image, audio, senderId, receiverId } = req.body;
         try {
-            const chat = yield messageModel_1.default.create({ text, image, audio, senderId, receiverId });
-            res.status(200).json(chat);
+            const message = yield messageModel_1.default.create({
+                text,
+                image,
+                audio,
+                senderId,
+                receiverId,
+            });
+            res.status(200).json(message);
         }
         catch (error) {
             res.status(400).json({ error: error.message });
         }
     });
 }
+// ✅ GET ALL MESSAGES (CLEAN QUERY)
 function getMessages(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const { senderId, receiverId } = req.params;
-        /*
-        @params
-        const page = (req.query.chats || 0) as number;
-        const chatsPerFetch = 10; */
         try {
             const chats = yield messageModel_1.default.find({
-                $and: [
-                    {
-                        $or: [{ senderId: senderId }, { receiverId: senderId }],
-                    },
-                    {
-                        $or: [{ receiverId: receiverId }, { senderId: receiverId }],
-                    },
+                $or: [
+                    { senderId, receiverId },
+                    { senderId: receiverId, receiverId: senderId },
                 ],
             }).sort({ createdAt: 1 });
             res.status(200).json(chats);
@@ -53,25 +53,27 @@ function getMessages(req, res) {
         }
     });
 }
+// ✅ GET LAST MESSAGE
 function getLastMessage(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const { senderId, receiverId } = req.params;
-        const uId = req.user._id;
         try {
-            const chats = yield messageModel_1.default.findOne({
-                $and: [
-                    {
-                        $or: [{ senderId: senderId }, { receiverId: senderId }],
-                    },
-                    {
-                        $or: [{ receiverId: receiverId }, { senderId: receiverId }],
-                    },
+            const lastMessage = yield messageModel_1.default.findOne({
+                $or: [
+                    { senderId, receiverId },
+                    { senderId: receiverId, receiverId: senderId },
                 ],
-            }).sort({ createdAt: -1 }).select("text image audio").where("senderId").ne(uId);
-            if ((chats === null || chats === void 0 ? void 0 : chats.text) === "" || (chats === null || chats === void 0 ? void 0 : chats.image) || (chats === null || chats === void 0 ? void 0 : chats.audio)) {
+            })
+                .sort({ createdAt: -1 })
+                .select("text image audio senderId");
+            if (!lastMessage) {
+                return res.status(200).json(null);
+            }
+            // ✅ MEDIA CHECK
+            if (!lastMessage.text && (lastMessage.image || lastMessage.audio)) {
                 return res.status(200).json({ text: "media-alt-send" });
             }
-            res.status(200).json(chats);
+            res.status(200).json(lastMessage);
         }
         catch (error) {
             res.status(400).json({ error: error.message });

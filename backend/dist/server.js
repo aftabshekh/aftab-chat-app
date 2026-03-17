@@ -15,25 +15,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
-const auth_1 = __importDefault(require("./routes/auth"));
-dotenv_1.default.config();
-// fix mongoose warning
-mongoose_1.default.set("strictQuery", false);
 const cors_1 = __importDefault(require("cors"));
 const socket_io_1 = require("socket.io");
 const http_1 = __importDefault(require("http"));
+// routes
+const auth_1 = __importDefault(require("./routes/auth"));
 const userRoute_1 = __importDefault(require("./routes/userRoute"));
 const userFriendRoute_1 = __importDefault(require("./routes/userFriendRoute"));
 const messageRoute_1 = __importDefault(require("./routes/messageRoute"));
 dotenv_1.default.config();
+mongoose_1.default.set("strictQuery", false);
 class Connection {
     constructor() {
         this.app = (0, express_1.default)();
-        this.http = http_1.default.createServer(this.app);
-        this.io = new socket_io_1.Server(this.http, {
+        this.server = http_1.default.createServer(this.app);
+        // ✅ 🔥 SOCKET.IO CORS (FINAL FIX)
+        this.io = new socket_io_1.Server(this.server, {
             cors: {
-                origin: "https://aftab-chat-app.vercel.app",
-                methods: ["GET", "POST"],
+                origin: true, // ✅ IMPORTANT (auto allow)
                 credentials: true
             }
         });
@@ -48,8 +47,9 @@ class Connection {
     }
     useMiddleWares() {
         this.app.use(express_1.default.json({ limit: "50mb" }));
+        // ✅ 🔥 EXPRESS CORS (FINAL FIX)
         this.app.use((0, cors_1.default)({
-            origin: "https://aftab-chat-app.vercel.app",
+            origin: true, // ✅ auto allow all origins
             credentials: true
         }));
     }
@@ -61,7 +61,8 @@ class Connection {
     }
     initSocketConnection() {
         this.io.on("connection", (socket) => {
-            console.log("User connected:", socket.id);
+            console.log("🔥 User connected:", socket.id);
+            // ✅ Add user
             socket.on("add-new-user", (userId) => {
                 if (!this.activeUsers.find((user) => user.userId === userId) &&
                     userId) {
@@ -69,18 +70,19 @@ class Connection {
                         userId,
                         socketId: socket.id
                     });
-                    this.io.emit("get-online-users", this.activeUsers);
                 }
+                this.io.emit("get-online-users", this.activeUsers);
             });
+            // ✅ Send message
             socket.on("send-message", (data) => {
-                const { receiverId } = data;
-                const user = this.activeUsers.find((user) => user.userId === receiverId);
+                const user = this.activeUsers.find((user) => user.userId === data.receiverId);
                 if (user) {
                     this.io.to(user.socketId).emit("receive-message", data);
                 }
             });
+            // ✅ Disconnect
             socket.on("disconnect", () => {
-                console.log("User disconnected:", socket.id);
+                console.log("❌ User disconnected:", socket.id);
                 this.activeUsers = this.activeUsers.filter((user) => user.socketId !== socket.id);
                 this.io.emit("get-online-users", this.activeUsers);
             });
@@ -88,7 +90,7 @@ class Connection {
     }
     listen() {
         const PORT = process.env.PORT || 5000;
-        this.http.listen(PORT, () => {
+        this.server.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
         });
     }
@@ -97,19 +99,20 @@ class Connection {
             try {
                 const DB_URI = process.env.DB_URI;
                 if (!DB_URI) {
-                    throw new Error("DB_URI is missing in environment variables");
+                    throw new Error("DB_URI is missing");
                 }
                 yield mongoose_1.default.connect(DB_URI);
                 console.log("✅ MongoDB Connected");
                 this.listen();
             }
             catch (error) {
-                console.error("❌ MongoDB connection error:", error);
+                console.error("❌ MongoDB error:", error);
                 process.exit(1);
             }
         });
     }
 }
+// ✅ INIT ORDER
 const server = new Connection();
 server.useMiddleWares();
 server.initializeRoutes();
