@@ -15,6 +15,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const auth_1 = __importDefault(require("./routes/auth"));
+dotenv_1.default.config();
+// fix mongoose warning
+mongoose_1.default.set("strictQuery", false);
 const cors_1 = __importDefault(require("cors"));
 const socket_io_1 = require("socket.io");
 const http_1 = __importDefault(require("http"));
@@ -28,8 +32,9 @@ class Connection {
         this.http = http_1.default.createServer(this.app);
         this.io = new socket_io_1.Server(this.http, {
             cors: {
-                origin: "*", // later replace with your Vercel domain
-                methods: ["GET", "POST"]
+                origin: "https://aftab-chat-app.vercel.app",
+                methods: ["GET", "POST"],
+                credentials: true
             }
         });
         this.activeUsers = [];
@@ -44,11 +49,12 @@ class Connection {
     useMiddleWares() {
         this.app.use(express_1.default.json({ limit: "50mb" }));
         this.app.use((0, cors_1.default)({
-            origin: "*",
+            origin: "https://aftab-chat-app.vercel.app",
             credentials: true
         }));
     }
     initializeRoutes() {
+        this.app.use("/api/auth", auth_1.default);
         this.app.use("/api/user", userRoute_1.default);
         this.app.use("/api/friend", userFriendRoute_1.default);
         this.app.use("/api/message", messageRoute_1.default);
@@ -89,7 +95,11 @@ class Connection {
     connectToDB() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield mongoose_1.default.connect(process.env.DB_URI);
+                const DB_URI = process.env.DB_URI;
+                if (!DB_URI) {
+                    throw new Error("DB_URI is missing in environment variables");
+                }
+                yield mongoose_1.default.connect(DB_URI);
                 console.log("✅ MongoDB Connected");
                 this.listen();
             }
